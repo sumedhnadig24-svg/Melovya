@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Humming Frequency & Prosody Studio</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .kannada-text {
+      font-family: 'Nirmala UI', 'Tunga', 'Segoe UI', 'Noto Sans Kannada', sans-serif;
+      line-height: 1.8 !important;
+      letter-spacing: 0.04em;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 antialiased p-4 md:p-8 min-h-screen">
+
+  <div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- Header Card -->
+    <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 mb-2">
+            <span>⚡</span> AUDIO INPUT ➔ FREQUENCY ANALYZER ➔ PITCH SNAPPER ➔ LAGHU/GURU ➔ RANDOM LYRICS
+          </div>
+          <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+            <span>🎙️</span> Real-Time Humming Frequency & Prosody Studio
+          </h1>
+          <p class="text-zinc-400 text-xs md:text-sm mt-1">
+            Note = Frequency • C0 to C10 Standard Pitch Mapping • T_laghu = 60 / (BPM × 2.8) • Independent Laghu-Guru & Random Lyrics
+          </p>
+        </div>
+        <div class="bg-zinc-950/80 p-3.5 rounded-xl border border-zinc-800 text-right">
+          <div class="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">Universal Base Time</div>
+          <div class="font-mono text-lg font-black text-emerald-400">
+            T_laghu = 60 / (BPM × 2.8)
+          </div>
+          <div id="headerTimeVal" class="text-xs font-mono text-zinc-300">
+            At 83 BPM = 258.2 ms (1 Mātra)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tempo, Time Signature & Mātra Duration Configuration -->
+    <div class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 shadow-lg space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center font-bold">1</span>
+          <span class="text-sm font-bold text-zinc-200">Tempo, Time Signature & Mātra Measurement Configuration</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="timeSigPill" class="font-mono text-purple-300 font-bold text-xs bg-purple-950/60 px-3 py-1 rounded-lg border border-purple-700/60">Time Sig: 6/8</span>
+          <span id="bpmVal" class="font-mono text-emerald-400 font-bold text-xs bg-zinc-950 px-3 py-1 rounded-lg border border-zinc-700">83 BPM</span>
+        </div>
+      </div>
+
+      <!-- Controls Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        <!-- Time Signature Input -->
+        <div class="md:col-span-5 space-y-1.5 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+          <div class="flex justify-between items-center text-xs font-mono">
+            <span class="text-zinc-300 font-bold">Time Signature (N/D):</span>
+            <span class="text-purple-400 text-[10px]">Takes User Input</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select id="timeSigSelect" onchange="onTimeSigPresetChanged()" class="bg-zinc-900 border border-zinc-700 text-zinc-200 text-xs font-mono rounded-lg px-2.5 py-1.5 flex-1 focus:outline-none focus:border-purple-500 cursor-pointer">
+              <option value="6/8" selected>6/8 (Rūpaka / Dādrā: 6 pulses)</option>
+              <option value="4/8">4/8 (Chaturasra: 4 pulses)</option>
+              <option value="5/8">5/8 (Khaṇḍa Chāpu: 5 pulses)</option>
+              <option value="7/8">7/8 (Mishra Chāpu: 7 pulses)</option>
+              <option value="4/4">4/4 (Ādi Tāla / Common: 8 Laghus)</option>
+              <option value="3/4">3/4 (Tisra: 6 Laghus)</option>
+              <option value="8/8">8/8 (Ashtamangala: 8 pulses)</option>
+              <option value="custom">Custom (Type below)</option>
+            </select>
+            <div id="customTimeSigBox" class="hidden flex items-center gap-1 font-mono text-xs">
+              <input type="number" id="customNum" value="6" min="1" max="32" oninput="updateTimeSigAndBpmSettings()" class="w-12 bg-zinc-900 border border-zinc-700 text-center rounded px-1 py-1 text-zinc-200">
+              <span class="text-zinc-500 font-bold">/</span>
+              <input type="number" id="customDen" value="8" min="1" max="32" oninput="updateTimeSigAndBpmSettings()" class="w-12 bg-zinc-900 border border-zinc-700 text-center rounded px-1 py-1 text-zinc-200">
+            </div>
+          </div>
+          <div id="timeSigExplainer" class="text-[10px] font-mono text-zinc-500">
+            Numerator 6 = 6 pulses/bar • Denominator 8 = Eighth-note Mātra pulse
+          </div>
+        </div>
+
+        <!-- Tempo Slider -->
+        <div class="md:col-span-7 space-y-1.5 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+          <div class="flex justify-between items-center text-xs font-mono">
+            <span class="text-zinc-300 font-bold">Tempo (BPM):</span>
+            <span class="text-emerald-400 text-[10px]">T_laghu = 60 / (BPM × 2.8)</span>
+          </div>
+          <input type="range" id="bpmSlider" min="60" max="160" value="83" oninput="updateTimeSigAndBpmSettings()" class="w-full accent-emerald-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] font-mono text-zinc-500">
+            <span>60 BPM (Slow)</span>
+            <span>83 BPM (Default)</span>
+            <span>120 BPM (Medium)</span>
+            <span>160 BPM (Fast)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Cards: Millisecond Measurement & Nearest Snapping Rule -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-center font-mono">
+          <div class="text-[10px] text-zinc-400 uppercase font-bold">1 Mātra (Laghu ⏑)</div>
+          <div id="m1TimeDisplay" class="text-base font-black text-indigo-300">258.2 ms</div>
+          <div class="text-[10px] text-zinc-500">Atomic Time Unit</div>
+        </div>
+
+        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-center font-mono">
+          <div class="text-[10px] text-zinc-400 uppercase font-bold">1 Guru (2 Mātras –)</div>
+          <div id="m2TimeDisplay" class="text-base font-black text-amber-300">361.4 ms</div>
+          <div class="text-[10px] text-zinc-500">2 × Laghu Duration</div>
+        </div>
+
+        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-center font-mono">
+          <div class="text-[10px] text-zinc-400 uppercase font-bold">1 Bar / Cycle Length</div>
+          <div id="barTimeDisplay" class="text-base font-black text-purple-300">2168.7 ms</div>
+          <div id="barPulsesDisplay" class="text-[10px] text-zinc-500">6 pulses per cycle</div>
+        </div>
+
+        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-center font-mono">
+          <div class="text-[10px] text-zinc-400 uppercase font-bold">Dynamic Prosody Rule</div>
+          <div class="text-[11px] font-bold text-emerald-400 mt-0.5">0-1.9: ⏑ | 1.9-2: ⏑~ (ಮ~)</div>
+          <div class="text-[10px] text-zinc-400">2-2.9: – (ಮಾ) | 2.9-3: –~ (ಮಾ~)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIO INPUT SECTION: RECORDING & FILE IMPORT -->
+    <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs flex items-center justify-center font-bold">2</span>
+          <span class="text-sm font-bold text-zinc-100 uppercase tracking-wide">Audio Input (Humming or File)</span>
+        </div>
+        <div id="audioStatusBadge" class="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 font-mono text-xs border border-zinc-700">
+          <span id="audioStatusDot" class="w-2 h-2 rounded-full bg-zinc-500"></span>
+          <span id="audioStatusText">Awaiting Audio Input...</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Waveform & Voice Frequency Visualizer Canvas -->
+      <div id="visualizerContainer" class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2.5">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2 font-mono">
+            <span id="vocalLiveDot" class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span>
+            <span id="vocalStatusLabel" class="font-bold text-zinc-400">MICROPHONE: Idle (Click 'Start Recording' to sing/hum)</span>
+          </div>
+          <div class="flex items-center gap-3 font-mono text-[11px]">
+            <span id="liveDbMeter" class="text-zinc-500 font-semibold">-∞ dB</span>
+            <span id="livePitchHz" class="text-indigo-400 font-semibold">Pitch: -- Hz</span>
+          </div>
+        </div>
+
+        <!-- 48 Dancing Equalizer Bars Canvas -->
+        <canvas id="waveformCanvas" width="920" height="90" class="w-full h-24 bg-zinc-950 rounded-lg border border-zinc-800/80 block"></canvas>
+      </div>
+
+      <!-- Recording and Input Buttons Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Mic Controls -->
+        <div class="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-zinc-300">Live Microphone</span>
+            <span id="recordingTimer" class="text-amber-400 font-bold">Ready</span>
+          </div>
+          <div class="flex gap-2">
+            <button id="btnStartRecord" onclick="startMicRecording()" class="flex-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow cursor-pointer">
+              <span>🔴</span> Record
+            </button>
+            <button id="btnStopRecord" onclick="stopMicRecording()" disabled class="flex-1 py-2 px-3 rounded-lg bg-zinc-800 text-zinc-500 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-not-allowed">
+              <span>⏹️</span> Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-zinc-300">Import Audio File</span>
+            <span id="uploadFileName" class="text-zinc-500 text-[10px] truncate max-w-[120px]">None chosen</span>
+          </div>
+          <label class="py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow cursor-pointer text-center">
+            <span>📁</span> Choose Audio File
+            <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFileUpload(event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- Sample Track 1: 10 Notes -->
+        <div class="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-zinc-300">Test Humming</span>
+            <span class="text-purple-400 text-[10px]">10 Notes (Breaths)</span>
+          </div>
+          <button onclick="loadUser10NoteBreathScenario()" class="w-full py-2 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow cursor-pointer">
+            <span>🎵</span> 10-Note Humming File
+          </button>
+        </div>
+
+        <!-- Sample Track 2: Repeated Notes Articulation -->
+        <div class="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
+          <div class="flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-zinc-300">Repeated Notes Test</span>
+            <span class="text-amber-400 text-[10px]">A3➔G#3➔A3 & Ext D3</span>
+          </div>
+          <button onclick="loadUserRepeatedNotesScenario()" class="w-full py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow cursor-pointer" title="Loads A3 to G#3 and back to A3 (2 words, different letters) + extended note D3 (1 letter only)">
+            <span>🔁</span> Repeated Notes Scenario
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INITIAL EMPTY STATE BANNER (Shown ONLY before audio is recorded or uploaded) -->
+    <div id="initialEmptyStateBanner" class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-12 text-center space-y-3">
+      <div class="text-4xl">🎙️</div>
+      <div class="text-lg font-bold text-zinc-200">No Audio Recorded Yet</div>
+      <div class="text-sm text-zinc-400 max-w-md mx-auto">
+        Please record your humming melody or import an audio file above.
+        The system will analyze each frequency, assign pitches from C0 to C10, compute Laghu and Guru codes separately, and generate lyrics.
+      </div>
+      <div class="pt-2 text-xs font-mono text-zinc-500">
+        Strict Rule: Lyrics and Laghu-Guru codes are never displayed before humming is recorded.
+      </div>
+    </div>
+
+    <!-- RESULTS SECTION (Displayed ONLY AFTER audio is processed) -->
+    <div id="resultsSection" class="hidden space-y-6">
+
+      <!-- Summary Banner -->
+      <div class="bg-zinc-900/90 border border-emerald-500/40 rounded-2xl p-5 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 text-lg flex items-center justify-center">✅</span>
+          <div>
+            <div id="resultAudioTitle" class="text-sm font-bold text-white">Audio Processed Successfully</div>
+            <div id="resultAudioSubtitle" class="text-xs font-mono text-zinc-400">Duration: 0.0s • 0 Lines Detected</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="playFullCalculatedMelody()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono transition flex items-center gap-1.5 shadow cursor-pointer" title="Play all calculated notes in sequence across all lines">
+            <span>🎵</span> Play Full Calculated Notes
+          </button>
+          <button id="btnPlayFullRecording" onclick="playFullRecordedAudio()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-xs font-mono transition flex items-center gap-1.5 cursor-pointer" title="Listen to original raw microphone/audio file">
+            <span>🎙️</span> Raw Audio
+          </button>
+          <button onclick="rerollRandomLetters()" class="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs font-mono transition flex items-center gap-1.5 shadow cursor-pointer">
+            <span>🎲</span> Re-roll Random Letters
+          </button>
+        </div>
+      </div>
+
+      <!-- Lines List Container -->
+      <div id="linesListContainer" class="space-y-6">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <!-- Frequency Analyzer Detailed Inspection Table -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs flex items-center justify-center font-bold">3</span>
+            <span class="text-sm font-bold text-zinc-200">Full Frequency Analyzer Inspection Table (Chronological)</span>
+          </div>
+          <span class="text-xs font-mono text-zinc-500">Note = Frequency • Nearest Standard Pitch (C0 to C10)</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-xs border border-zinc-800 rounded-xl overflow-hidden">
+            <thead class="bg-zinc-950 text-zinc-400 uppercase text-[11px] border-b border-zinc-800">
+              <tr>
+                <th class="py-2.5 px-3">#</th>
+                <th class="py-2.5 px-3">Measured Freq</th>
+                <th class="py-2.5 px-3">Nearest Pitch</th>
+                <th class="py-2.5 px-3">Standard Freq</th>
+                <th class="py-2.5 px-3">Duration (ms)</th>
+                <th class="py-2.5 px-3">Time Sig</th>
+                <th class="py-2.5 px-3">Mātra Snapping Math (&gt; 0.9 Rule)</th>
+                <th class="py-2.5 px-3">Mātras</th>
+                <th class="py-2.5 px-3">Laghu / Guru</th>
+                <th class="py-2.5 px-3">Assigned Letter</th>
+                <th class="py-2.5 px-3">Repeat Articulation</th>
+              </tr>
+            </thead>
+            <tbody id="frequencyTableBody" class="divide-y divide-zinc-800/60 bg-zinc-900/40">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. STANDARD PITCH TABLE (C0 to C10)
+    // =========================================================================
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const PITCH_TABLE = [];
+
+    // MIDI 12 (C0: 16.35 Hz) up to MIDI 132 (C10: 16744.04 Hz)
+    for (let midi = 12; midi <= 132; midi++) {
+      const pName = `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
+      const stdHz = 440.0 * Math.pow(2.0, (midi - 69.0) / 12.0);
+      PITCH_TABLE.push({
+        name: pName,
+        midi: midi,
+        hz: stdHz
+      });
+    }
+
+    function findNearestStandardPitch(detectedHz) {
+      if (!detectedHz || detectedHz <= 0) return { name: "REST", midi: 0, hz: 0 };
+      let best = PITCH_TABLE[0];
+      let minDiff = 999999;
+      for (let p of PITCH_TABLE) {
+        const diff = Math.abs(Math.log2(detectedHz / p.hz));
+        if (diff < minDiff) {
+          minDiff = diff;
+          best = p;
+        }
+      }
+      return best;
+    }
+
+    // =========================================================================
+    // 2. RANDOM KANNADA LETTER PALETTES (BY MĀTRA WEIGHT)
+    // =========================================================================
+    const HRASVA_LETTERS = ['ಕ', 'ತ', 'ನ', 'ಲ', 'ಮ', 'ರ', 'ಸ', 'ದ', 'ಬ', 'ಗ', 'ಜ', 'ವ', 'ಯ', 'ಹ', 'ಅ', 'ಇ', 'ಉ', 'ಎ', 'ಪ', 'ಡ', 'ಚ'];
+    const DEERGHA_LETTERS = ['ಕಾ', 'ನೀ', 'ತೋ', 'ದೇ', 'ಹಾ', 'ಬಾ', 'ಕಂ', 'ನಂ', 'ಮಿಂ', 'ರಂ', 'ಜೀ', 'ಮೈ', 'ಪೂ', 'ಗೋ', 'ಆ', 'ಈ', 'ಊ', 'ಏ', 'ಓ', 'ಸೋ', 'ರಾ', 'ಮಾ', 'ದಾ', 'ವಾ'];
+    const PLUTA_BASES = ['ಆ', 'ಹಾ', 'ಸೋ', 'ನೀ', 'ದೇ', 'ತೋ', 'ಓ', 'ತಾ', 'ರಾ', 'ಬಾ', 'ಮಾ', 'ದೋ'];
+
+    function pickRandomLetterForMatra(matra, preferredChar) {
+      if (matra <= 1) {
+        if (preferredChar && HRASVA_LETTERS.includes(preferredChar)) return preferredChar;
+        return HRASVA_LETTERS[Math.floor(Math.random() * HRASVA_LETTERS.length)];
+      } else if (matra === 2) {
+        if (preferredChar && DEERGHA_LETTERS.includes(preferredChar)) return preferredChar;
+        return DEERGHA_LETTERS[Math.floor(Math.random() * DEERGHA_LETTERS.length)];
+      } else {
+        const tildes = '~'.repeat(matra - 2);
+        const base = (preferredChar && PLUTA_BASES.includes(preferredChar))
+          ? preferredChar
+          : PLUTA_BASES[Math.floor(Math.random() * PLUTA_BASES.length)];
+        return `${base}${tildes}`;
+      }
+    }
+
+    function pickLetterForRepresentation(baseType, tildes, preferredChar, excludeLetters = []) {
+      const cleanPref = preferredChar ? preferredChar.replace(/~/g, '') : null;
+      const excludeClean = new Set((excludeLetters || []).map(c => c ? c.replace(/~/g, '') : ''));
+
+      if (baseType === 'laghu') {
+        let pool = HRASVA_LETTERS.filter(c => !excludeClean.has(c));
+        if (pool.length === 0) pool = HRASVA_LETTERS;
+        const base = (cleanPref && pool.includes(cleanPref))
+          ? cleanPref
+          : pool[Math.floor(Math.random() * pool.length)];
+        return `${base}${tildes}`;
+      } else {
+        let pool = DEERGHA_LETTERS.filter(c => !excludeClean.has(c));
+        if (pool.length === 0) pool = DEERGHA_LETTERS;
+        const base = (cleanPref && pool.includes(cleanPref))
+          ? cleanPref
+          : pool[Math.floor(Math.random() * pool.length)];
+        return `${base}${tildes}`;
+      }
+    }
+
+    function getProsodicRepresentation(ratio, threshold = 0.9) {
+      if (ratio <= 1.0) {
+        return { matras: 1, symbol: "⏑", baseType: "laghu", tildes: "" };
+      }
+      const k = Math.floor(ratio);
+      const frac = Math.round((ratio - k) * 10000) / 10000;
+      if (frac > threshold) {
+        const matras = k + 1;
+        if (k === 1) {
+          // 1.9 to 2.0: ~ in front of Laghu (e.g. ⏑~ and ಮ~)
+          return { matras: matras, symbol: "⏑~", baseType: "laghu", tildes: "~" };
+        } else {
+          // Stretched Guru form (e.g. > 2.9 to 3.0: –~ and ಮಾ~)
+          const tildes = "~".repeat(k - 1);
+          return { matras: matras, symbol: `–${tildes}`, baseType: "guru", tildes: tildes };
+        }
+      } else {
+        const matras = k;
+        if (k === 1) {
+          // 0 to 1.9: simple Laghu (e.g. ⏑ and ಮ)
+          return { matras: matras, symbol: "⏑", baseType: "laghu", tildes: "" };
+        } else if (k === 2) {
+          // 2.0 to 2.9: simple Guru (e.g. – and ಮಾ)
+          return { matras: matras, symbol: "–", baseType: "guru", tildes: "" };
+        } else {
+          // Pluta as (k - 1) tildes in front of Laghu (e.g. 3 to 3.9: ⏑~~ and ಮ~~)
+          const tildes = "~".repeat(k - 1);
+          return { matras: matras, symbol: `⏑${tildes}`, baseType: "laghu", tildes: tildes };
+        }
+      }
+    }
+
+    // =========================================================================
+    // 3. TIME SIGNATURE & TEMPO CONTROLS
+    // =========================================================================
+    function getTimeSignature() {
+      const select = document.getElementById('timeSigSelect');
+      if (!select) return { num: 6, den: 8, label: '6/8' };
+      const val = select.value;
+      if (val === 'custom') {
+        const num = parseInt(document.getElementById('customNum').value, 10) || 6;
+        const den = parseInt(document.getElementById('customDen').value, 10) || 8;
+        return { num: Math.max(1, num), den: Math.max(1, den), label: `${num}/${den}` };
+      }
+      const parts = val.split('/').map(v => parseInt(v, 10));
+      return { num: parts[0] || 6, den: parts[1] || 8, label: val };
+    }
+
+    function getMatraDurationMs(bpm, timeSig) {
+      // Base formula: T_laghu = (60 / (bpm * 2.8)) * (8 / den)
+      const basePulseMs = (60.0 / (bpm * 2.8)) * 1000.0;
+      return basePulseMs * (8.0 / timeSig.den);
+    }
+
+    function onTimeSigPresetChanged() {
+      const select = document.getElementById('timeSigSelect');
+      const customBox = document.getElementById('customTimeSigBox');
+      if (select && select.value === 'custom') {
+        customBox.classList.remove('hidden');
+      } else if (customBox) {
+        customBox.classList.add('hidden');
+      }
+      updateTimeSigAndBpmSettings();
+    }
+
+    function updateTimeSigAndBpmSettings() {
+      const bpm = parseFloat(document.getElementById('bpmSlider').value) || 83.0;
+      const timeSig = getTimeSignature();
+      const tMatraMs = getMatraDurationMs(bpm, timeSig);
+      const barDurationMs = timeSig.num * tMatraMs;
+
+      const bpmVal = document.getElementById('bpmVal');
+      if (bpmVal) bpmVal.innerText = `${bpm} BPM`;
+
+      const timeSigPill = document.getElementById('timeSigPill');
+      if (timeSigPill) timeSigPill.innerText = `Time Sig: ${timeSig.label}`;
+
+      const headerTimeVal = document.getElementById('headerTimeVal');
+      if (headerTimeVal) headerTimeVal.innerText = `At ${bpm} BPM [${timeSig.label}] = ${tMatraMs.toFixed(1)} ms (1 Mātra)`;
+
+      const m1Display = document.getElementById('m1TimeDisplay');
+      if (m1Display) m1Display.innerText = `${tMatraMs.toFixed(1)} ms`;
+
+      const m2Display = document.getElementById('m2TimeDisplay');
+      if (m2Display) m2Display.innerText = `${(tMatraMs * 2.0).toFixed(1)} ms`;
+
+      const barDisplay = document.getElementById('barTimeDisplay');
+      if (barDisplay) barDisplay.innerText = `${barDurationMs.toFixed(1)} ms`;
+
+      const barPulsesDisplay = document.getElementById('barPulsesDisplay');
+      if (barPulsesDisplay) barPulsesDisplay.innerText = `${timeSig.num} pulses / cycle`;
+
+      const explainer = document.getElementById('timeSigExplainer');
+      if (explainer) {
+        explainer.innerText = `Numerator ${timeSig.num} = ${timeSig.num} pulses/cycle • Denominator ${timeSig.den} (${tMatraMs.toFixed(1)} ms per mātra unit)`;
+      }
+
+      // If audio was already processed, re-analyze with the new BPM and Time Signature
+      if (currentDecodedBuffer) {
+        processDecodedAudio(currentDecodedBuffer, currentAudioLabel);
+      }
+    }
+
+    // =========================================================================
+    // 4. REAL-TIME MICROPHONE RECORDING & 60 FPS EQUALIZER VISUALIZER
+    // =========================================================================
+    let audioCtx = null;
+    let liveMicStream = null;
+    let micAudioSource = null;
+    let micAnalyserNode = null;
+    let micScriptNode = null;
+    let isMicRecording = false;
+    let recordedPcmFloats = [];
+    let visualizerAnimFrame = null;
+    let lastRecordedBuffer = null;
+    let currentDecodedBuffer = null;
+    let currentAudioLabel = "Live Audio";
+    let lastProcessedAnalysis = null;
+    let recordStartTime = 0;
+    let recordTimerInterval = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    async function startMicRecording() {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') await ctx.resume();
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Microphone access is not supported on this browser context. Note: Chrome requires http://localhost or http://127.0.0.1 for microphone permissions.');
+        }
+
+        liveMicStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        micAudioSource = ctx.createMediaStreamSource(liveMicStream);
+
+        // Real Analyser Node for Dancing Frequency Bars
+        micAnalyserNode = ctx.createAnalyser();
+        micAnalyserNode.fftSize = 128; // 64 frequency bins
+        micAnalyserNode.smoothingTimeConstant = 0.35;
+        micAudioSource.connect(micAnalyserNode);
+
+        // Direct Raw Float32 PCM Recording
+        const bufferSize = 4096;
+        micScriptNode = ctx.createScriptProcessor(bufferSize, 1, 1);
+        recordedPcmFloats = [];
+
+        micScriptNode.onaudioprocess = (e) => {
+          if (!isMicRecording) return;
+          const inputData = e.inputBuffer.getChannelData(0);
+          for (let i = 0; i < inputData.length; i++) {
+            recordedPcmFloats.push(inputData[i]);
+          }
+        };
+
+        const muteGain = ctx.createGain();
+        muteGain.gain.value = 0;
+        micAudioSource.connect(micScriptNode);
+        micScriptNode.connect(muteGain);
+        muteGain.connect(ctx.destination);
+
+        isMicRecording = true;
+        recordStartTime = Date.now();
+
+        document.getElementById('btnStartRecord').disabled = true;
+        document.getElementById('btnStartRecord').className = 'flex-1 py-2 px-3 rounded-lg bg-zinc-800 text-zinc-500 font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed';
+        document.getElementById('btnStopRecord').disabled = false;
+        document.getElementById('btnStopRecord').className = 'flex-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow animate-pulse';
+
+        recordTimerInterval = setInterval(() => {
+          const elapsed = ((Date.now() - recordStartTime) / 1000).toFixed(1);
+          document.getElementById('recordingTimer').innerText = `Recording: ${elapsed}s`;
+        }, 100);
+
+        document.getElementById('audioStatusDot').className = 'w-2 h-2 rounded-full bg-red-500 animate-ping';
+        document.getElementById('audioStatusText').innerText = 'Microphone LIVE! Sing or hum your melody now...';
+
+        drawRealtimeVoiceVisualizer();
+
+      } catch (err) {
+        console.error('Mic error:', err);
+        alert('Microphone Access Error:\n' + err.message + '\n\nTIP: In Chrome & Edge, microphone permissions require http://127.0.0.1:5000. Launch "python app.py" for full microphone support!');
+        document.getElementById('audioStatusDot').className = 'w-2 h-2 rounded-full bg-amber-500';
+        document.getElementById('audioStatusText').innerText = 'Microphone blocked or unavailable.';
+      }
+    }
+
+    function drawRealtimeVoiceVisualizer() {
+      const canvas = document.getElementById('waveformCanvas');
+      if (!canvas || !micAnalyserNode) return;
+      const canvasCtx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+
+      const numBars = 48;
+      const freqData = new Uint8Array(micAnalyserNode.frequencyBinCount);
+      const timeData = new Uint8Array(micAnalyserNode.fftSize);
+
+      function renderFrame() {
+        if (!isMicRecording) {
+          canvasCtx.fillStyle = '#09090b';
+          canvasCtx.fillRect(0, 0, width, height);
+          canvasCtx.strokeStyle = '#27272a';
+          canvasCtx.lineWidth = 1.5;
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(0, height / 2);
+          canvasCtx.lineTo(width, height / 2);
+          canvasCtx.stroke();
+          return;
+        }
+
+        visualizerAnimFrame = requestAnimationFrame(renderFrame);
+
+        micAnalyserNode.getByteFrequencyData(freqData);
+        micAnalyserNode.getByteTimeDomainData(timeData);
+
+        // Calculate physical RMS
+        let sumSq = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          const v = (timeData[i] - 128) / 128.0;
+          sumSq += v * v;
+        }
+        const rms = Math.sqrt(sumSq / timeData.length);
+        const db = rms > 1e-4 ? Math.round(20 * Math.log10(rms)) : -60;
+        const hasVocalEnergy = rms > 0.015;
+
+        const dot = document.getElementById('vocalLiveDot');
+        const label = document.getElementById('vocalStatusLabel');
+        const dbMeter = document.getElementById('liveDbMeter');
+        const pitchHz = document.getElementById('livePitchHz');
+
+        if (dbMeter) dbMeter.innerText = `${db} dB`;
+
+        if (hasVocalEnergy) {
+          if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+          if (label) {
+            label.innerText = '● LIVE VOICE / HUMMING DETECTED';
+            label.className = 'font-bold text-emerald-400 font-mono text-xs';
+          }
+          const f0 = detectF0AutocorrFloat(timeData, audioCtx.sampleRate, true);
+          if (f0 && pitchHz) {
+            pitchHz.innerText = `Pitch: ${Math.round(f0)} Hz`;
+          }
+        } else {
+          if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-zinc-600';
+          if (label) {
+            label.innerText = '○ SILENCE (Breath Pause)';
+            label.className = 'font-bold text-zinc-500 font-mono text-xs';
+          }
+          if (pitchHz) pitchHz.innerText = `Pitch: -- Hz`;
+        }
+
+        canvasCtx.fillStyle = '#09090b';
+        canvasCtx.fillRect(0, 0, width, height);
+
+        const barWidth = (width / numBars) - 2;
+        const binStep = Math.max(1, Math.floor(freqData.length / numBars));
+
+        for (let i = 0; i < numBars; i++) {
+          const val = freqData[i * binStep] || 0;
+          let barHeight = hasVocalEnergy ? Math.max(3, (val / 255.0) * (height - 10)) : 2;
+          const x = i * (barWidth + 2);
+          const y = (height - barHeight) / 2;
+
+          if (hasVocalEnergy) {
+            const grad = canvasCtx.createLinearGradient(0, y, 0, y + barHeight);
+            grad.addColorStop(0, '#34d399');
+            grad.addColorStop(0.5, '#38bdf8');
+            grad.addColorStop(1, '#818cf8');
+            canvasCtx.fillStyle = grad;
+          } else {
+            canvasCtx.fillStyle = '#27272a';
+          }
+
+          canvasCtx.beginPath();
+          canvasCtx.roundRect(x, y, barWidth, barHeight, 2);
+          canvasCtx.fill();
+        }
+      }
+
+      renderFrame();
+    }
+
+    function stopMicRecording() {
+      if (!isMicRecording) return;
+      isMicRecording = false;
+      clearInterval(recordTimerInterval);
+
+      if (visualizerAnimFrame) cancelAnimationFrame(visualizerAnimFrame);
+
+      if (micScriptNode) micScriptNode.disconnect();
+      if (micAudioSource) micAudioSource.disconnect();
+      if (liveMicStream) liveMicStream.getTracks().forEach(t => t.stop());
+
+      document.getElementById('btnStartRecord').disabled = false;
+      document.getElementById('btnStartRecord').className = 'flex-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow cursor-pointer';
+      document.getElementById('btnStopRecord').disabled = true;
+      document.getElementById('btnStopRecord').className = 'flex-1 py-2 px-3 rounded-lg bg-zinc-800 text-zinc-500 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-not-allowed';
+
+      if (!recordedPcmFloats || recordedPcmFloats.length < 4000) {
+        alert('Recording was too short (< 0.2s) or no audio was captured.');
+        document.getElementById('recordingTimer').innerText = 'No audio captured';
+        return;
+      }
+
+      const ctx = getAudioContext();
+      const recDuration = (recordedPcmFloats.length / ctx.sampleRate).toFixed(1);
+      document.getElementById('recordingTimer').innerText = `Finished (${recDuration}s)`;
+
+      const audioBuffer = ctx.createBuffer(1, recordedPcmFloats.length, ctx.sampleRate);
+      audioBuffer.copyToChannel(new Float32Array(recordedPcmFloats), 0);
+      lastRecordedBuffer = audioBuffer;
+
+      // Run pipeline on the recorded humming!
+      processDecodedAudio(audioBuffer, `Live Microphone Humming (${recDuration}s)`);
+    }
+
+    function playFullRecordedAudio() {
+      if (!lastRecordedBuffer && !currentDecodedBuffer) return;
+      const ctx = getAudioContext();
+      const src = ctx.createBufferSource();
+      src.buffer = lastRecordedBuffer || currentDecodedBuffer;
+      src.connect(ctx.destination);
+      src.start();
+    }
+
+    function playAudioSnippet(startS, endS) {
+      if (!currentDecodedBuffer) return;
+      const ctx = getAudioContext();
+      const src = ctx.createBufferSource();
+      src.buffer = currentDecodedBuffer;
+      src.connect(ctx.destination);
+      src.start(0, startS, Math.max(0.1, endS - startS));
+    }
+
+    // =========================================================================
+    // 4B. SYNTHESIZED MUSICAL NOTE PLAYBACK (EXACT PITCH & EXACT MILLISECONDS)
+    // =========================================================================
+    function playSynthesizedTone(ctx, freq, startTime, durationSec) {
+      if (!freq || freq <= 20 || durationSec <= 0) return;
+
+      const osc = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const gain2 = ctx.createGain();
+
+      // Primary tone + gentle overtone for realistic acoustic body
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq * 2, startTime);
+      gain2.gain.setValueAtTime(0.18, startTime);
+
+      const attack = Math.min(0.012, durationSec * 0.1);
+      const release = Math.min(0.020, durationSec * 0.15);
+      const sustain = Math.max(0.01, durationSec - attack - release);
+
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.linearRampToValueAtTime(0.35, startTime + attack);
+      gain.gain.setValueAtTime(0.35, startTime + attack + sustain);
+      gain.gain.linearRampToValueAtTime(0.0001, startTime + durationSec);
+
+      osc.connect(gain);
+      osc2.connect(gain2);
+      gain2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc2.start(startTime);
+      osc.stop(startTime + durationSec + 0.05);
+      osc2.stop(startTime + durationSec + 0.05);
+    }
+
+    function playSingleCalculatedNote(freq, durMs) {
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const durSec = Math.max(0.05, durMs / 1000.0);
+      playSynthesizedTone(ctx, freq, now, durSec);
+    }
+
+    function playLineCalculatedNotes(lineIdx) {
+      if (!lastProcessedAnalysis || !lastProcessedAnalysis.lines || !lastProcessedAnalysis.lines[lineIdx]) return;
+      const line = lastProcessedAnalysis.lines[lineIdx];
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+
+      let currTime = ctx.currentTime + 0.05;
+
+      line.words.forEach((w, wIdx) => {
+        w.notes.forEach(n => {
+          const durSec = Math.max(0.05, n.durMs / 1000.0);
+          const freq = n.standardHz || n.detectedHz;
+          playSynthesizedTone(ctx, freq, currTime, durSec);
+          currTime += durSec;
+        });
+
+        // Add breath pause between words if not the last word
+        if (wIdx < line.words.length - 1) {
+          const pause = (w.gapAfter && w.gapAfter > 0) ? Math.min(0.40, Math.max(0.15, w.gapAfter)) : 0.20;
+          currTime += pause;
+        }
+      });
+    }
+
+    function playFullCalculatedMelody() {
+      if (!lastProcessedAnalysis || !lastProcessedAnalysis.lines || !lastProcessedAnalysis.lines.length) return;
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+
+      let currTime = ctx.currentTime + 0.05;
+
+      lastProcessedAnalysis.lines.forEach((line, lIdx) => {
+        line.words.forEach((w, wIdx) => {
+          w.notes.forEach(n => {
+            const durSec = Math.max(0.05, n.durMs / 1000.0);
+            const freq = n.standardHz || n.detectedHz;
+            playSynthesizedTone(ctx, freq, currTime, durSec);
+            currTime += durSec;
+          });
+
+          // Breath pause between words
+          if (wIdx < line.words.length - 1) {
+            const pause = (w.gapAfter && w.gapAfter > 0) ? Math.min(0.35, Math.max(0.15, w.gapAfter)) : 0.20;
+            currTime += pause;
+          }
+        });
+
+        // Longer gap between lines
+        if (lIdx < lastProcessedAnalysis.lines.length - 1) {
+          const lineGap = (line.gapAfter && line.gapAfter > 0) ? Math.min(0.70, Math.max(0.40, line.gapAfter)) : 0.50;
+          currTime += lineGap;
+        }
+      });
+    }
+
+    // =========================================================================
+    // 5. IMPORT AUDIO FILE & TEST SAMPLE
+    // =========================================================================
+    async function handleAudioFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      document.getElementById('uploadFileName').innerText = file.name;
+      document.getElementById('audioStatusDot').className = 'w-2 h-2 rounded-full bg-indigo-500 animate-ping';
+      document.getElementById('audioStatusText').innerText = `Decoding audio file: ${file.name}...`;
+
+      const ctx = getAudioContext();
+      const arrayBuffer = await file.arrayBuffer();
+      try {
+        const decoded = await ctx.decodeAudioData(arrayBuffer);
+        processDecodedAudio(decoded, file.name);
+      } catch (err) {
+        alert('Could not decode audio file: ' + err.message);
+      }
+    }
+
+    function loadUser10NoteBreathScenario() {
+      const ctx = getAudioContext();
+      const sr = 44100;
+      const bpm = parseFloat(document.getElementById('bpmSlider').value) || 83.0;
+      const timeSig = getTimeSignature();
+      const tLaghu = getMatraDurationMs(bpm, timeSig) / 1000.0;
+
+      function synthNote(freq, dur) {
+        const num = Math.floor(dur * sr);
+        const audio = new Float32Array(num);
+        for (let i = 0; i < num; i++) {
+          const t = i / sr;
+          const env = Math.sin(Math.PI * (i / num)) ** 0.5;
+          audio[i] = (0.6 * Math.sin(2 * Math.PI * freq * t) +
+                      0.25 * Math.sin(2 * Math.PI * (freq * 2) * t) +
+                      0.15 * Math.sin(2 * Math.PI * (freq * 3) * t)) * env;
+        }
+        return audio;
+      }
+
+      function synthSilence(dur) {
+        const num = Math.floor(dur * sr);
+        const s = new Float32Array(num);
+        for (let i = 0; i < num; i++) s[i] = (Math.random() - 0.5) * 0.002;
+        return s;
+      }
+
+      // Line 1: Word 1 (Note 1: 4m [A3: 220Hz], Note 2: 2m [D3: 147Hz])
+      const n1 = synthNote(220.00, tLaghu * 4);
+      const n2 = synthNote(146.83, tLaghu * 2);
+      const b1 = synthSilence(0.30); // Breath Pause 1 (300ms)
+
+      // Line 1: Word 2 (Note 3: 5m [F3: 175Hz], Note 4: 2m [G3: 196Hz], Note 5: 1m [A3: 220Hz])
+      const n3 = synthNote(174.61, tLaghu * 5);
+      const n4 = synthNote(196.00, tLaghu * 2);
+      const n5 = synthNote(220.00, tLaghu * 1);
+      const gap1 = synthSilence(0.80); // Longer Gap (800ms -> Line Break)
+
+      // Line 2: Word 3 (Note 6: 3m [G3: 196Hz], Note 7: 2m [E3: 165Hz], Note 8: 1m [D3: 147Hz])
+      const n6 = synthNote(196.00, tLaghu * 3);
+      const n7 = synthNote(164.81, tLaghu * 2);
+      const n8 = synthNote(146.83, tLaghu * 1);
+      const b2 = synthSilence(0.32); // Breath Pause 2 (320ms)
+
+      // Line 2: Word 4 (Note 9: 2m [C3: 131Hz], Note 10: 2m [D3: 147Hz])
+      const n9 = synthNote(130.81, tLaghu * 2);
+      const n10 = synthNote(146.83, tLaghu * 2);
+
+      const totalLen = n1.length + n2.length + b1.length + n3.length + n4.length + n5.length + gap1.length +
+                       n6.length + n7.length + n8.length + b2.length + n9.length + n10.length;
+      const merged = new Float32Array(totalLen);
+      let offset = 0;
+      [n1, n2, b1, n3, n4, n5, gap1, n6, n7, n8, b2, n9, n10].forEach(chunk => {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      });
+
+      const buffer = ctx.createBuffer(1, merged.length, sr);
+      buffer.copyToChannel(merged, 0);
+
+      document.getElementById('uploadFileName').innerText = 'sample_user_10notes_breaths.wav';
+      processDecodedAudio(buffer, "User's 10-Note Humming Scenario");
+    }
+
+    function loadUserRepeatedNotesScenario() {
+      const ctx = getAudioContext();
+      const sr = 44100;
+      const bpm = parseFloat(document.getElementById('bpmSlider').value) || 83.0;
+      const timeSig = getTimeSignature();
+      const tLaghu = getMatraDurationMs(bpm, timeSig) / 1000.0;
+
+      function synthNote(freq, dur) {
+        const num = Math.floor(dur * sr);
+        const audio = new Float32Array(num);
+        for (let i = 0; i < num; i++) {
+          const t = i / sr;
+          const env = Math.sin(Math.PI * (i / num)) ** 0.5;
+          audio[i] = (0.6 * Math.sin(2 * Math.PI * freq * t) +
+                      0.25 * Math.sin(2 * Math.PI * (freq * 2) * t) +
+                      0.15 * Math.sin(2 * Math.PI * (freq * 3) * t)) * env;
+        }
+        return audio;
+      }
+
+      function synthSilence(dur) {
+        const num = Math.floor(dur * sr);
+        const s = new Float32Array(num);
+        for (let i = 0; i < num; i++) s[i] = (Math.random() - 0.5) * 0.001;
+        return s;
+      }
+
+      // Line 1:
+      // A3 (400ms) -> G#3 dip (60ms) -> A3 (400ms) (Repeated note via slight note shift)
+      const n1 = synthNote(220.00, 0.40);
+      const dip = synthNote(207.65, 0.06);
+      const n2 = synthNote(220.00, 0.40);
+      const b1 = synthSilence(0.30); // Breath Pause
+
+      // Single note extended for long time: D3 (1040ms = 4 matras at 83 BPM)
+      const n3 = synthNote(146.83, 1.04);
+      const gap1 = synthSilence(0.80); // Line break
+
+      // Line 2:
+      // A3 (400ms) -> slight gap (50ms) -> A3 (400ms) (Repeated note via slight gap)
+      const n4 = synthNote(220.00, 0.40);
+      const microGap = synthSilence(0.05);
+      const n5 = synthNote(220.00, 0.40);
+      const b2 = synthSilence(0.30); // Breath Pause
+
+      // Word with C3 (500ms) -> D3 (420ms)
+      const n6 = synthNote(130.81, 0.50);
+      const n7 = synthNote(146.83, 0.42);
+
+      const totalLen = n1.length + dip.length + n2.length + b1.length + n3.length + gap1.length +
+                       n4.length + microGap.length + n5.length + b2.length + n6.length + n7.length;
+      const merged = new Float32Array(totalLen);
+      let offset = 0;
+      [n1, dip, n2, b1, n3, gap1, n4, microGap, n5, b2, n6, n7].forEach(chunk => {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      });
+
+      const buffer = ctx.createBuffer(1, merged.length, sr);
+      buffer.copyToChannel(merged, 0);
+
+      document.getElementById('uploadFileName').innerText = 'sample_user_repeated_and_extended_notes.wav';
+      processDecodedAudio(buffer, "User's Repeated Notes Scenario (A3➔G#3➔A3 & Ext D3)");
+    }
+
+    // =========================================================================
+    // 6. FREQUENCY ANALYZER & AUTOCORRELATION PITCH TRACKING
+    // =========================================================================
+    function detectF0AutocorrFloat(frame, sampleRate, isUint8 = false) {
+      const minF0 = 65, maxF0 = 600;
+      const minLag = Math.floor(sampleRate / maxF0);
+      const maxLag = Math.floor(sampleRate / minF0);
+      const N = frame.length;
+
+      let sumSq0 = 0;
+      for (let i = 0; i < N; i++) {
+        const val = isUint8 ? (frame[i] - 128) / 128.0 : frame[i];
+        sumSq0 += val * val;
+      }
+      if (sumSq0 < 1e-4) return null;
+
+      let maxCorr = -1, bestLag = -1;
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        let sum = 0, sumSqLag = 0;
+        for (let i = 0; i < N - lag; i++) {
+          const v1 = isUint8 ? (frame[i] - 128) / 128.0 : frame[i];
+          const v2 = isUint8 ? (frame[i + lag] - 128) / 128.0 : frame[i + lag];
+          sum += v1 * v2;
+          sumSqLag += v2 * v2;
+        }
+        const denom = Math.sqrt(sumSq0 * sumSqLag) + 1e-9;
+        const normCorr = sum / denom;
+        if (normCorr > maxCorr) {
+          maxCorr = normCorr;
+          bestLag = lag;
+        }
+      }
+
+      if (maxCorr > 0.35 && bestLag > 0) {
+        return sampleRate / bestLag;
+      }
+      return null;
+    }
+
+    function extractSegmentsFromChunkJS(chunkData, sr) {
+      const pFrameDur = 0.04, pHopDur = 0.02;
+      const pFrameLen = Math.floor(pFrameDur * sr);
+      const pHopLen = Math.floor(pHopDur * sr);
+      const pNumFrames = Math.floor((chunkData.length - pFrameLen) / pHopLen);
+
+      const rawSegs = [];
+      let currF0 = null, currCount = 0, currSilence = 0;
+
+      for (let i = 0; i < pNumFrames; i++) {
+        const sub = chunkData.subarray(i * pHopLen, i * pHopLen + pFrameLen);
+        let sumSq = 0;
+        for (let j = 0; j < sub.length; j++) sumSq += sub[j] * sub[j];
+        const rms = Math.sqrt(sumSq / sub.length);
+        const f0 = (rms > 0.008) ? detectF0AutocorrFloat(sub, sr) : null;
+
+        if (f0 === null) {
+          if (currCount > 0) {
+            rawSegs.push({ type: 'note', f0: currF0, durS: currCount * pHopDur });
+            currCount = 0;
+            currF0 = null;
+          }
+          currSilence++;
+        } else {
+          if (currSilence > 0) {
+            rawSegs.push({ type: 'gap', durS: currSilence * pHopDur });
+            currSilence = 0;
+          }
+          if (currF0 === null) {
+            currF0 = f0;
+            currCount = 1;
+          } else {
+            const semitoneDiff = Math.abs(12.0 * Math.log2(f0 / currF0));
+            if (semitoneDiff < 0.8) {
+              currF0 = (currF0 * currCount + f0) / (currCount + 1);
+              currCount++;
+            } else {
+              rawSegs.push({ type: 'note', f0: currF0, durS: currCount * pHopDur });
+              currF0 = f0;
+              currCount = 1;
+            }
+          }
+        }
+      }
+      if (currCount > 0) {
+        rawSegs.push({ type: 'note', f0: currF0, durS: currCount * pHopDur });
+      }
+      if (currSilence > 0) {
+        rawSegs.push({ type: 'gap', durS: currSilence * pHopDur });
+      }
+
+      return rawSegs;
+    }
+
+    function snapRatioToMatras(ratio, threshold = 0.9) {
+      if (ratio <= 1.0) return 1;
+      const base = Math.floor(ratio);
+      const frac = Math.round((ratio - base) * 10000) / 10000;
+      if (frac > threshold) {
+        return base + 1;
+      }
+      return base;
+    }
+
+    // =========================================================================
+    // 7. MAIN PIPELINE: AUDIO ➔ FREQUENCIES ➔ PITCH ➔ LAGHU/GURU ➔ RANDOM LYRICS
+    // =========================================================================
+    function processDecodedAudio(audioBuffer, sourceLabel) {
+      currentDecodedBuffer = audioBuffer;
+      currentAudioLabel = sourceLabel;
+      const sr = audioBuffer.sampleRate;
+      const channelData = audioBuffer.getChannelData(0);
+      const totalDur = audioBuffer.duration;
+
+      // 1. RMS Energy VAD
+      const frameDur = 0.03, hopDur = 0.015;
+      const frameLen = Math.floor(frameDur * sr);
+      const hopLen = Math.floor(hopDur * sr);
+      const numFrames = Math.floor((channelData.length - frameLen) / hopLen);
+
+      const rms = new Float32Array(numFrames);
+      let peakRms = 0;
+      for (let i = 0; i < numFrames; i++) {
+        const start = i * hopLen;
+        let sumSq = 0;
+        for (let j = 0; j < frameLen; j++) {
+          const s = channelData[start + j];
+          sumSq += s * s;
+        }
+        const r = Math.sqrt(sumSq / frameLen);
+        rms[i] = r;
+        if (r > peakRms) peakRms = r;
+      }
+
+      const silenceThresh = Math.max(0.008, peakRms * 0.12);
+      const chunks = [];
+      let inSpeech = false, speechStart = 0;
+
+      for (let i = 0; i < numFrames; i++) {
+        const val = rms[i] > silenceThresh;
+        if (val && !inSpeech) {
+          inSpeech = true;
+          speechStart = i;
+        } else if (!val && inSpeech) {
+          inSpeech = false;
+          chunks.push([speechStart * hopDur, i * hopDur]);
+        }
+      }
+      if (inSpeech) chunks.push([speechStart * hopDur, numFrames * hopDur]);
+      if (chunks.length === 0) chunks.push([0.0, totalDur]);
+
+      // 2. Hierarchical Silence Segmentation
+      const breathPauseMin = 0.15; // 150ms -> Word break
+      const longerGapMin = 0.55;   // 550ms -> Line break
+
+      const linesOfWordIntervals = [];
+      let currentLineWords = [];
+      let currStart = chunks[0][0];
+      let currEnd = chunks[0][1];
+
+      for (let k = 1; k < chunks.length; k++) {
+        const gap = chunks[k][0] - currEnd;
+        if (gap >= longerGapMin) {
+          currentLineWords.push({ start: currStart, end: currEnd, gapAfter: gap, isLineBreak: true });
+          linesOfWordIntervals.push(currentLineWords);
+          currentLineWords = [];
+          currStart = chunks[k][0];
+          currEnd = chunks[k][1];
+        } else if (gap >= breathPauseMin) {
+          currentLineWords.push({ start: currStart, end: currEnd, gapAfter: gap, isLineBreak: false });
+          currStart = chunks[k][0];
+          currEnd = chunks[k][1];
+        } else {
+          currEnd = chunks[k][1];
+        }
+      }
+      currentLineWords.push({ start: currStart, end: currEnd, gapAfter: 0, isLineBreak: true });
+      if (currentLineWords.length > 0) linesOfWordIntervals.push(currentLineWords);
+
+      // 3. Mathematical Prosodic Unit with Time Signature
+      const bpm = parseFloat(document.getElementById('bpmSlider').value) || 83.0;
+      const timeSig = getTimeSignature();
+      const tMatraMs = getMatraDurationMs(bpm, timeSig);
+      const tLaghuSec = tMatraMs / 1000.0;
+
+      const is10NoteScenario = sourceLabel.includes("10-Note") || sourceLabel.includes("sample_user_10notes");
+      const demoPreferred = [
+        [['ಆ', 'ದ'], ['ಹಾ', 'ಸ', 'ನ']],
+        [['ನೀ', 'ಇ', 'ಮ'], ['ಬ', 'ದ']]
+      ];
+
+      const analyzedLines = [];
+      const allNoteEvents = [];
+      let globalNoteOrder = 1;
+
+      linesOfWordIntervals.forEach((wordIntervals, lineIdx) => {
+        const lineNum = lineIdx + 1;
+        const formedWords = [];
+
+        wordIntervals.forEach((wInt, wIdx) => {
+          const wStartSample = Math.floor(wInt.start * sr);
+          const wEndSample = Math.floor(wInt.end * sr);
+          const wData = channelData.subarray(wStartSample, wEndSample);
+
+          const rawSegs = extractSegmentsFromChunkJS(wData, sr);
+
+          const prefWordLetters = (is10NoteScenario && lineIdx < demoPreferred.length && wIdx < demoPreferred[lineIdx].length)
+            ? demoPreferred[lineIdx][wIdx]
+            : null;
+
+          let segIdx = 0;
+          let prevRepeatedLetter = null;
+          let repCounter = 0;
+          const chunkWords = [];
+          let currWordNotes = [];
+          let currLetters = [];
+          let currMatras = [];
+          let currLgSymbols = [];
+          let currPitches = [];
+
+          while (segIdx < rawSegs.length) {
+            const seg = rawSegs[segIdx];
+            if (seg.type === 'gap') {
+              segIdx++;
+              continue;
+            }
+            const durS = seg.durS;
+            if (durS < 0.07 && rawSegs.length > 1) {
+              segIdx++;
+              continue;
+            }
+
+            const durMs = Math.round(durS * 10000) / 10;
+            const detectedHz = Math.round(seg.f0 * 10) / 10;
+            const pitchInfo = findNearestStandardPitch(seg.f0);
+            const pitchName = pitchInfo.name;
+            const stdHz = Math.round(pitchInfo.hz * 10) / 10;
+
+            // Repetition Articulation Check (Slight note shift or slight gap)
+            let isRepeatNext = false;
+            let repeatReason = null;
+            let jumpSteps = 1;
+
+            if (segIdx + 2 < rawSegs.length && repCounter < 3) {
+              const mid = rawSegs[segIdx + 1];
+              const nxt = rawSegs[segIdx + 2];
+              if (nxt.type === 'note') {
+                const nxtP = findNearestStandardPitch(nxt.f0).name;
+                if (nxtP === pitchName) {
+                  if (mid.type === 'note' && mid.durS <= 0.18) {
+                    const midP = findNearestStandardPitch(mid.f0).name;
+                    const semitoneDist = Math.abs(12.0 * Math.log2(mid.f0 / seg.f0));
+                    if (semitoneDist <= 2.5) {
+                      isRepeatNext = true;
+                      repeatReason = `Slight Note Shift (${pitchName} ➔ ${midP} ➔ ${nxtP})`;
+                      jumpSteps = 2;
+                    }
+                  } else if (mid.type === 'gap' && mid.durS <= 0.14) {
+                    isRepeatNext = true;
+                    repeatReason = `Slight Gap (${Math.round(mid.durS * 1000)}ms)`;
+                    jumpSteps = 2;
+                  }
+                }
+              }
+            }
+
+            const exactRatio = durMs / tMatraMs;
+            const rep = getProsodicRepresentation(exactRatio, 0.9);
+            const m = rep.matras;
+            const lgSym = rep.symbol;
+            currMatras.push(m);
+            currLgSymbols.push(lgSym);
+            currPitches.push(pitchName);
+
+            const baseK = Math.floor(exactRatio);
+            const fracK = Math.round((exactRatio - baseK) * 1000) / 1000;
+            let ruleTag = "";
+            if (exactRatio <= 1.0) {
+              ruleTag = "(0-1.9 ➔ ⏑)";
+            } else if (fracK > 0.9) {
+              ruleTag = `(> ${baseK}.9 ➔ ${lgSym})`;
+            } else {
+              ruleTag = `(<= ${baseK}.9 ➔ ${lgSym})`;
+            }
+            const repTag = repeatReason ? ` [🔁 ${repeatReason}]` : "";
+            const ratioCalcStr = `${durMs.toFixed(1)}ms / ${tMatraMs.toFixed(1)}ms = ${exactRatio.toFixed(2)} ➔ ${m}m [${lgSym}] ${ruleTag}${repTag}`;
+
+            // Pick letter: exclude previous repeated letter so repeated notes get different letters!
+            const prefChar = (prefWordLetters && currLetters.length < prefWordLetters.length) ? prefWordLetters[currLetters.length] : null;
+            const excludeList = prevRepeatedLetter ? [prevRepeatedLetter] : [];
+            const letter = pickLetterForRepresentation(rep.baseType, rep.tildes, prefChar, excludeList);
+            currLetters.push(letter);
+
+            const nObj = {
+              noteOrder: globalNoteOrder++,
+              detectedHz: detectedHz,
+              pitchName: pitchName,
+              standardHz: stdHz,
+              durS: durS,
+              durMs: durMs,
+              timeSig: timeSig.label,
+              exactRatio: exactRatio,
+              ratioCalcStr: ratioCalcStr,
+              matras: m,
+              laghuGuru: lgSym,
+              letter: letter,
+              isRepeated: Boolean(repeatReason || prevRepeatedLetter),
+              repeatReason: repeatReason,
+              prevRepeatedLetter: prevRepeatedLetter
+            };
+            currWordNotes.push(nObj);
+            allNoteEvents.push(nObj);
+
+            if (isRepeatNext) {
+              // User rule: 'give two word for the two repeated notes'
+              chunkWords.push({
+                wordText: currLetters.join(''),
+                letters: [...currLetters],
+                letterCount: currLetters.length,
+                matraPattern: [...currMatras],
+                totalMatras: currMatras.reduce((a, b) => a + b, 0),
+                laghuGuruSymbols: [...currLgSymbols],
+                laghuGuruCode: currLgSymbols.join(' '),
+                pitches: [...currPitches],
+                notes: [...currWordNotes],
+                start: wInt.start,
+                end: wInt.end,
+                gapAfter: 0.05,
+                repeatTrigger: repeatReason,
+                isLineBreak: false
+              });
+              currWordNotes = [];
+              currLetters = [];
+              currMatras = [];
+              currLgSymbols = [];
+              currPitches = [];
+              prevRepeatedLetter = letter;
+              repCounter++;
+              segIdx += jumpSteps;
+            } else {
+              prevRepeatedLetter = null;
+              repCounter = 0;
+              segIdx++;
+            }
+          }
+
+          if (currWordNotes.length > 0) {
+            chunkWords.push({
+              wordText: currLetters.join(''),
+              letters: [...currLetters],
+              letterCount: currLetters.length,
+              matraPattern: [...currMatras],
+              totalMatras: currMatras.reduce((a, b) => a + b, 0),
+              laghuGuruSymbols: [...currLgSymbols],
+              laghuGuruCode: currLgSymbols.join(' '),
+              pitches: [...currPitches],
+              notes: [...currWordNotes],
+              start: wInt.start,
+              end: wInt.end,
+              gapAfter: wInt.gapAfter,
+              repeatTrigger: null,
+              isLineBreak: wInt.isLineBreak
+            });
+          }
+
+          chunkWords.forEach(cw => formedWords.push(cw));
+        });
+
+        // Re-number word indices in line
+        formedWords.forEach((fw, fIdx) => fw.wordIndex = fIdx + 1);
+
+        // Words separated by space form the Line
+        const lineText = formedWords.map(w => w.wordText).join(' ');
+        const lineLaghuGuru = formedWords.map(w => `[${w.laghuGuruCode}]`).join('  ');
+        const linePitchCode = formedWords.map(w => `[${w.pitches.join(' ➔ ')}]`).join('  ');
+        const lineMatrasBreakdown = formedWords.map(w => `[${w.matraPattern.map(m => `${m}m`).join(', ')}]`).join(' ');
+        const totalLineMatras = formedWords.reduce((a, b) => a + b.totalMatras, 0);
+        const totalLetters = formedWords.reduce((a, b) => a + b.letterCount, 0);
+
+        const lineStart = wordIntervals[0].start;
+        const lineEnd = wordIntervals[wordIntervals.length - 1].end;
+        const lastWord = wordIntervals[wordIntervals.length - 1];
+
+        analyzedLines.push({
+          lineNum: lineNum,
+          start: lineStart.toFixed(2),
+          end: lineEnd.toFixed(2),
+          dur: (lineEnd - lineStart).toFixed(2),
+          words: formedWords,
+          lineText: lineText,
+          pitchCode: linePitchCode,
+          laghuGuruCode: lineLaghuGuru,
+          matraBreakdown: lineMatrasBreakdown,
+          totalMatras: totalLineMatras,
+          totalLetters: totalLetters,
+          totalWords: formedWords.length,
+          gapAfter: lastWord.gapAfter
+        });
+      });
+
+      lastProcessedAnalysis = {
+        label: sourceLabel,
+        totalDur: totalDur,
+        lines: analyzedLines,
+        allNotes: allNoteEvents
+      };
+
+      // Hide empty state banner and display results
+      document.getElementById('initialEmptyStateBanner').classList.add('hidden');
+      document.getElementById('resultsSection').classList.remove('hidden');
+
+      // Update Header Status
+      document.getElementById('audioStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-400';
+      document.getElementById('audioStatusText').innerText = `Processed: ${sourceLabel} (${totalDur.toFixed(1)}s)`;
+      document.getElementById('resultAudioTitle').innerText = `${sourceLabel}`;
+      document.getElementById('resultAudioSubtitle').innerText = `Duration: ${totalDur.toFixed(1)}s • ${analyzedLines.length} Lines • ${allNoteEvents.length} Notes Analyzed`;
+
+      renderAnalysisOutput(lastProcessedAnalysis);
+    }
+
+    function renderAnalysisOutput(analysis) {
+      const container = document.getElementById('linesListContainer');
+      container.innerHTML = '';
+
+      analysis.lines.forEach((l, lIdx) => {
+        const card = document.createElement('div');
+        card.className = 'p-6 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-5 shadow-2xl';
+
+        // Word cards HTML
+        const wordsHtml = l.words.map((w, wIdx) => {
+          const noteItems = w.notes.map(n => `
+            <div class="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <span class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-bold">#${n.noteOrder}</span>
+                <span class="text-zinc-300">Measured: <b class="text-emerald-400">${n.detectedHz} Hz</b></span>
+                <span class="text-zinc-500">➔</span>
+                <span class="text-zinc-300">Pitch: <b class="text-indigo-400">${n.pitchName}</b> <span class="text-zinc-500">(${n.standardHz} Hz)</span></span>
+                <button onclick="playSingleCalculatedNote(${n.standardHz}, ${n.durMs})" class="px-2 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/50 text-emerald-300 font-bold text-[11px] flex items-center gap-1 transition cursor-pointer ml-1" title="Play ${n.pitchName} (${n.standardHz}Hz) for ${n.durMs.toFixed(1)}ms">
+                  <span>▶</span> Play ${n.pitchName} (${n.durMs.toFixed(0)}ms)
+                </button>
+              </div>
+              <div class="flex flex-wrap items-center gap-2.5">
+                <span class="text-zinc-300 font-semibold">${n.durMs.toFixed(1)} ms</span>
+                <span class="text-zinc-500 font-mono text-[11px] bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">${n.ratioCalcStr}</span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold border border-amber-500/20">${n.matras}m : ${n.laghuGuru}</span>
+                <span class="text-zinc-500">➔</span>
+                <span class="text-lg font-black text-amber-200 kannada-text px-2 py-0.5 rounded bg-zinc-900 border border-zinc-700">'${n.letter}'</span>
+              </div>
+            </div>
+          `).join('');
+
+          const isLastWord = (wIdx === l.words.length - 1);
+          let pauseNotice = '';
+          if (w.repeatTrigger) {
+            pauseNotice = `
+              <div class="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-xs font-mono text-amber-300">
+                <span class="flex items-center gap-2">
+                  <span>🔁</span>
+                  <span class="font-bold">Repeated Note Detected (${w.repeatTrigger}):</span>
+                  <span>Formed 2 Separate Words with Different Letters (Space added)</span>
+                </span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-bold text-[10px]">REPEATED NOTE SPLIT</span>
+              </div>
+            `;
+          } else if (!isLastWord && w.gapAfter >= 0.15 && w.gapAfter < 0.55) {
+            pauseNotice = `
+              <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between text-xs font-mono text-indigo-300">
+                <span class="flex items-center gap-2">
+                  <span>💨</span>
+                  <span class="font-bold">Breath Pause Detected (${Math.round(w.gapAfter * 1000)}ms):</span>
+                  <span>Singer took breath ➔ Marks Word Boundary (Space added)</span>
+                </span>
+                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-200 font-bold text-[10px]">WORD COMPLETED</span>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="space-y-2">
+              <div class="p-4 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5">
+                    <span class="px-2.5 py-1 rounded-md bg-purple-500/20 text-purple-300 font-mono font-bold text-xs border border-purple-500/30">WORD ${w.wordIndex}</span>
+                    <span class="text-2xl font-black text-amber-300 kannada-text tracking-wider">"${w.wordText}"</span>
+                    <span class="text-xs font-mono text-zinc-400">(${w.letterCount} letters)</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-1 rounded bg-zinc-800 text-zinc-300 font-mono text-xs">
+                      Mātras: [${w.matraPattern.map(m => `${m}m`).join(', ')}] = ${w.totalMatras}m
+                    </span>
+                    <span class="px-2.5 py-1 rounded bg-indigo-950 text-indigo-300 font-mono text-xs border border-indigo-800">
+                      L/G: ${w.laghuGuruCode}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                  ${noteItems}
+                </div>
+              </div>
+              ${pauseNotice}
+            </div>
+          `;
+        }).join('');
+
+        const lineBreakHtml = (l.gapAfter >= 0.55 && lIdx < analysis.lines.length - 1)
+          ? `<div class="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-xs font-mono text-amber-300">
+              <span class="flex items-center gap-2">
+                <span>⏸️</span>
+                <span class="font-bold">Longer Gap Detected (${Math.round(l.gapAfter * 1000)}ms &ge; 550ms):</span>
+                <span>Singer left longer pause ➔ Marks LINE BREAK (New line begins)</span>
+              </span>
+              <span class="px-3 py-1 rounded bg-amber-500/20 text-amber-200 font-bold text-xs">LINE BREAK</span>
+             </div>`
+          : '';
+
+        card.innerHTML = `
+          <!-- Line Header -->
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-black font-mono text-xs shadow">LINE ${l.lineNum}</span>
+              <span class="font-mono text-xs text-zinc-400">[${l.start}s - ${l.end}s] (${l.dur}s)</span>
+              <span class="px-2.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono text-xs font-bold">
+                ${l.totalWords} Words • ${l.totalLetters} Letters • ${l.totalMatras} Mātras Total
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="playLineCalculatedNotes(${lIdx})" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono flex items-center gap-1.5 transition shadow cursor-pointer" title="Play exact calculated notes (pitches & durations) for Line ${l.lineNum}">
+                <span>🎵</span> Play Calculated Notes (${l.dur}s)
+              </button>
+              <button onclick="playAudioSnippet(${l.start}, ${l.end})" class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-mono flex items-center gap-1 transition cursor-pointer" title="Original raw microphone/audio snippet">
+                <span>🎙️</span> Raw Audio
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 1: Pitch / Note Code -->
+          <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
+            <div class="text-[11px] font-mono text-zinc-400 uppercase font-bold flex items-center justify-between">
+              <span>1️⃣ PITCH / NOTE CODE (Chronological notes mapped to C0-C10)</span>
+              <span class="text-indigo-400 font-semibold">Note = Frequency Run</span>
+            </div>
+            <div class="text-base font-mono font-black text-indigo-300 tracking-wider">${l.pitchCode}</div>
+          </div>
+
+          <!-- Section 2: Laghu and Guru Code (Separately Written) -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-indigo-950/50 to-zinc-950 border border-indigo-500/30 space-y-1.5">
+            <div class="text-[11px] font-mono text-indigo-300 uppercase font-bold flex items-center justify-between">
+              <span>2️⃣ LAGHU & GURU CODE (Separately Written)</span>
+              <span class="text-zinc-400 font-normal">0-1.9: ⏑ | 1.9-2: ⏑~ | 2-2.9: – | 2.9-3: –~ | 3-3.9: ⏑~~ | 3.9-4: –~~</span>
+            </div>
+            <div class="text-2xl font-mono font-black text-amber-300 tracking-widest">${l.laghuGuruCode}</div>
+            <div class="text-xs font-mono text-zinc-400">Rhythm Breakdown: <span class="text-zinc-200 font-bold">${l.matraBreakdown}</span> (${l.totalMatras} mātras total)</div>
+          </div>
+
+          <!-- Section 3: Lyrics Without Meaning (Random Letters) -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-purple-950/50 via-zinc-950 to-zinc-950 border border-purple-500/40 space-y-2">
+            <div class="text-[11px] font-mono text-purple-300 uppercase font-bold flex items-center justify-between">
+              <span>3️⃣ LYRICS WITHOUT MEANING (Random Letters Matching Note Mātras)</span>
+              <span class="text-zinc-400 font-normal">Laghu base (0-1.9): 'ಮ' | Laghu + ~ (1.9-2): 'ಮ~' | Guru base (2-2.9): 'ಮಾ' | Guru + ~ (2.9-3): 'ಮಾ~'</span>
+            </div>
+            <div class="text-3xl font-black text-emerald-300 kannada-text tracking-wide">${l.lineText}</div>
+            <div class="text-xs font-mono text-zinc-400">Letters dynamically assigned with tilde ~ extension matching the exact acoustic ratio.</div>
+          </div>
+
+          <!-- Section 4: Word-by-Word Derivation Cards -->
+          <div class="space-y-3 pt-1">
+            <div class="text-xs font-mono text-zinc-400 uppercase font-bold tracking-wider">Word & Letter Derivation Breakdown:</div>
+            ${wordsHtml}
+          </div>
+
+          ${lineBreakHtml}
+        `;
+        container.appendChild(card);
+      });
+
+      // Render Inspection Table (10 columns matching headers)
+      const tBody = document.getElementById('frequencyTableBody');
+      tBody.innerHTML = '';
+      analysis.allNotes.forEach(n => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-zinc-800/40 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-bold text-zinc-400">#${n.noteOrder}</td>
+          <td class="py-2.5 px-3 text-emerald-400 font-bold">${n.detectedHz} Hz</td>
+          <td class="py-2.5 px-3">
+            <button onclick="playSingleCalculatedNote(${n.standardHz}, ${n.durMs})" class="text-indigo-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition cursor-pointer" title="Play ${n.pitchName} (${n.standardHz}Hz) for ${n.durMs.toFixed(1)}ms">
+              <span>▶</span> ${n.pitchName}
+            </button>
+          </td>
+          <td class="py-2.5 px-3 text-zinc-400">${n.standardHz} Hz</td>
+          <td class="py-2.5 px-3 text-zinc-200 font-bold">${n.durMs.toFixed(1)} ms</td>
+          <td class="py-2.5 px-3 text-purple-300 font-semibold">${n.timeSig || '6/8'}</td>
+          <td class="py-2.5 px-3 text-zinc-300 font-mono text-[11px]">${n.ratioCalcStr}</td>
+          <td class="py-2.5 px-3 text-amber-300 font-bold">${n.matras}m</td>
+          <td class="py-2.5 px-3 text-amber-400 font-bold">${n.laghuGuru}</td>
+          <td class="py-2.5 px-3 text-xl font-bold text-amber-200 kannada-text">'${n.letter}'</td>
+          <td class="py-2.5 px-3 text-xs text-amber-300 font-mono">${n.repeatReason || (n.isRepeated ? 'Repeated Note' : '-')}</td>
+        `;
+        tBody.appendChild(tr);
+      });
+    }
+
+    function rerollRandomLetters() {
+      if (!lastProcessedAnalysis) return;
+
+      // Re-roll random letters for all notes while strictly preserving mātras & pitches
+      // and maintaining different letters for repeated notes
+      let prevRepLetter = null;
+      lastProcessedAnalysis.lines.forEach(l => {
+        l.words.forEach(w => {
+          w.letters = w.notes.map(n => {
+            const rep = getProsodicRepresentation(n.exactRatio);
+            const exclude = n.prevRepeatedLetter ? [prevRepLetter || n.prevRepeatedLetter] : [];
+            const newLetter = pickLetterForRepresentation(rep.baseType, rep.tildes, null, exclude);
+            n.letter = newLetter;
+            if (n.repeatReason) {
+              prevRepLetter = newLetter;
+            } else if (!n.prevRepeatedLetter) {
+              prevRepLetter = null;
+            }
+            return newLetter;
+          });
+          w.wordText = w.letters.join('');
+        });
+        l.lineText = l.words.map(w => w.wordText).join(' ');
+      });
+
+      renderAnalysisOutput(lastProcessedAnalysis);
+    }
+
+    function initVisualizerCanvas() {
+      const canvas = document.getElementById('waveformCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#27272a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+    }
+
+    // Initialize
+    updateTimeSigAndBpmSettings();
+    initVisualizerCanvas();
+  </script>
+</body>
+</html>
